@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+
+require './lib/awskits'
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+profile    = ARGV.shift
+token_code = ARGV.shift
+
+factory = AWSKits::Factory.new(profile, token_code)
+
+ec2 = factory.resource("EC2")
+
+sg_using_interface = Hash.new([])
+
+ec2.instances.each do |instance|
+  instance_id = instance.data.instance_id
+  name_tag = instance.data.tags.find {|t| t.key == "Name"}
+  name = name_tag.value unless name_tag.nil?
+
+  puts "#{name}\t#{instance_id}"
+end

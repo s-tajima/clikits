@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+require './lib/awskits'
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+profile    = ARGV.shift
+token_code = ARGV.shift
+
+factory = AWSKits::Factory.new(profile, token_code)
+
+ec2 = factory.resource("EC2")
+
+sg_using_interface = Hash.new([])
+
+ec2.network_interfaces.each do |interface|
+  interface.data.groups.each do |group|
+    sg_using_interface[group.group_id] = [] if sg_using_interface[group.group_id].empty?
+    sg_using_interface[group.group_id] << interface.data.network_interface_id
+  end
+end
+
+ec2.security_groups.each do |sg|
+  sg.data.ip_permissions.each do |perm|
+    perm.ip_ranges.each do |range|
+      interfaces = sg_using_interface[sg.id].join(", ")
+      puts "#{sg.id}\t#{sg.group_name}\t#{perm.ip_protocol}\t#{perm.from_port}\t#{perm.to_port}\t#{range[:cidr_ip]}\t#{range[:description]}\t#{interfaces}"
+    end
+  end
+end
