@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+profile    = ARGV.shift
+token_code = ARGV.shift
+
+factory = AWSKits::Factory.new(profile, token_code)
+
+alb = factory.client("ElasticLoadBalancingV2")
+
+res_lb = alb.describe_load_balancers
+
+res_lb.load_balancers.each do |lb|
+  res_attr = alb.describe_load_balancer_attributes({load_balancer_arn: lb.load_balancer_arn})
+
+  log_enabled = res_attr.attributes.find{|v| v.key == "access_logs.s3.enabled" }.value
+  log_bucket  = res_attr.attributes.find{|v| v.key == "access_logs.s3.bucket" }.value
+  log_prefix  = res_attr.attributes.find{|v| v.key == "access_logs.s3.prefix" }.value
+
+  puts "#{lb.load_balancer_name}\t#{lb.type}\t#{log_enabled}\t#{log_bucket}\t#{log_prefix}"
+end
+
