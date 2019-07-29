@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+profile    = ARGV.shift
+token_code = ARGV.shift
+
+factory = AWSKits::Factory.new(profile, token_code)
+
+s3 = factory.client("S3")
+
+buckets = s3.list_buckets.buckets
+
+puts "bucket_name\tblock_public_acls\tignore_public_acls\tblock_public_policy\trestrict_public_buckets"
+
+buckets.each do |bucket|
+  begin
+    res = s3.get_public_access_block({ bucket: bucket.name })
+
+    block_public_acls = res.public_access_block_configuration.block_public_acls
+    ignore_public_acls = res.public_access_block_configuration.ignore_public_acls
+    block_public_policy = res.public_access_block_configuration.block_public_policy
+    restrict_public_buckets = res.public_access_block_configuration.restrict_public_buckets
+
+  rescue Aws::S3::Errors::NoSuchPublicAccessBlockConfiguration => ex
+
+    block_public_acls = "NONE"
+    ignore_public_acls = "NONE"
+    block_public_policy = "NONE"
+    restrict_public_buckets = "NONE"
+
+  rescue Aws::S3::Errors::PermanentRedirect => ex
+
+    block_public_acls = "FAILED"
+    ignore_public_acls = "FAILED"
+    block_public_policy = "FAILED"
+    restrict_public_buckets = "FAILED"
+
+  end
+
+  puts "#{bucket.name}\t#{block_public_acls}\t#{ignore_public_acls}\t#{block_public_policy}\t#{restrict_public_buckets}"
+end
