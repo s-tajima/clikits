@@ -12,9 +12,27 @@ s3 = factory.client("S3")
 
 buckets = s3.list_buckets.buckets
 
-puts "bucket_name\tblock_public_acls\tignore_public_acls\tblock_public_policy\trestrict_public_buckets"
+puts "bucket_name\tbucket_policy\twebsite_hosting\tblock_public_acls\tignore_public_acls\tblock_public_policy\trestrict_public_buckets"
 
 buckets.each do |bucket|
+  begin 
+    res = s3.get_bucket_policy({ bucket: bucket.name })
+    bucket_policy = "ENABLE"
+  rescue Aws::S3::Errors::NoSuchBucketPolicy => ex
+    bucket_policy = "DISABLE"
+  rescue Aws::S3::Errors::PermanentRedirect => ex
+    bucket_policy = "FAILED"
+  end
+
+  begin
+    res = s3.get_bucket_website({ bucket: bucket.name })
+    website_hosting = "ENABLE"
+  rescue Aws::S3::Errors::NoSuchWebsiteConfiguration => ex
+    website_hosting = "DISABLE"
+  rescue Aws::S3::Errors::PermanentRedirect => ex
+    website_hosting = "FAILED"
+  end
+
   begin
     res = s3.get_public_access_block({ bucket: bucket.name })
 
@@ -22,22 +40,17 @@ buckets.each do |bucket|
     ignore_public_acls = res.public_access_block_configuration.ignore_public_acls
     block_public_policy = res.public_access_block_configuration.block_public_policy
     restrict_public_buckets = res.public_access_block_configuration.restrict_public_buckets
-
   rescue Aws::S3::Errors::NoSuchPublicAccessBlockConfiguration => ex
-
     block_public_acls = "NONE"
     ignore_public_acls = "NONE"
     block_public_policy = "NONE"
     restrict_public_buckets = "NONE"
-
   rescue Aws::S3::Errors::PermanentRedirect => ex
-
     block_public_acls = "FAILED"
     ignore_public_acls = "FAILED"
     block_public_policy = "FAILED"
     restrict_public_buckets = "FAILED"
-
   end
 
-  puts "#{bucket.name}\t#{block_public_acls}\t#{ignore_public_acls}\t#{block_public_policy}\t#{restrict_public_buckets}"
+  puts "#{bucket.name}\t#{bucket_policy}\t#{website_hosting}\t#{block_public_acls}\t#{ignore_public_acls}\t#{block_public_policy}\t#{restrict_public_buckets}"
 end
