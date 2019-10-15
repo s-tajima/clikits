@@ -12,8 +12,6 @@ access_token = ENV['GITHUB_ACCESS_TOKEN']
 client = Octokit::Client.new(:access_token => access_token)
 
 client.repos.each do |repo|
-  next unless repo.full_name =~ /^Smartplus-sec/
-
   begin
     protection = client.branch_protection(repo.full_name, repo.default_branch, :accept => 'application/vnd.github.luke-cage-preview+json')
   rescue => e
