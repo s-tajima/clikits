@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+require 'octokit'
+require 'pp'
+
+Octokit.configure do |c|
+  c.auto_paginate = true
+end
+
+access_token = ENV['GITHUB_ACCESS_TOKEN']
+
+client = Octokit::Client.new(:access_token => access_token)
+
+client.repos.each do |repo|
+  begin
+    protection = client.branch_protection(repo.full_name, repo.default_branch, :accept => 'application/vnd.github.luke-cage-preview+json')
+  rescue => e
+    puts "#{repo.full_name}\t#{e.message}"
+    next
+  end
+
+  if protection.nil?
+    puts "#{repo.full_name}"
+    next
+  end
+
+  print "#{repo.full_name}\t"
+  print "#{protection.to_hash.dig(:required_pull_request_reviews, :dismiss_stale_reviews)}\t"
+  print "#{protection.to_hash.dig(:required_pull_request_reviews, :require_code_owner_reviews)}\t"
+  print "#{protection.to_hash.dig(:required_pull_request_reviews, :required_approving_review_count)}\t"
+  print "#{protection.to_hash.dig(:required_status_checks, :strict)}\t"
+  print "#{protection.to_hash.dig(:enforce_admins, :enabled)}\n"
+end
