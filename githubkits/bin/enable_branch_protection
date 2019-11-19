@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'octokit'
+require 'pp'
+
+
+repo_name = ARGV.shift
+
+Octokit.configure do |c|
+  c.auto_paginate = true
+end
+
+access_token = ENV['GITHUB_ACCESS_TOKEN']
+
+client = Octokit::Client.new(:access_token => access_token)
+
+repo = client.repo(repo_name)
+
+options = {
+  :required_status_checks => {:strict => true, :contexts => []},
+  :enforce_admins => true, 
+  :required_pull_request_reviews => {
+    :dismiss_stale_reviews => true, 
+    :require_code_owner_reviews => false,
+    :required_approving_review_count => 1,
+  },
+  :accept => 'application/vnd.github.luke-cage-preview+json'
+}
+
+client.protect_branch(repo.full_name, repo.default_branch, options)
+
+puts "Protect branch for #{repo_name} was enabled."
