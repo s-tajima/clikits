@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+profile    = ARGV.shift
+token_code = ARGV.shift
+
+factory = AWSKits::Factory.new(profile, token_code)
+
+s3 = factory.client("S3")
+
+buckets = s3.list_buckets.buckets
+
+puts "bucket_name\tsse_algorithm"
+
+buckets.each do |bucket|
+  begin 
+    res = s3.get_bucket_encryption({ bucket: bucket.name })
+    puts "#{bucket.name}\t#{res.server_side_encryption_configuration.rules[0].apply_server_side_encryption_by_default.sse_algorithm}"
+  rescue Aws::S3::Errors::ServerSideEncryptionConfigurationNotFoundError => ex
+    puts "#{bucket.name}\tNone"
+  end
+end
