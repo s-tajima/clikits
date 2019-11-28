@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+require 'octokit'
+require 'pp'
+
+Octokit.configure do |c|
+  c.auto_paginate = true
+end
+
+repo_name = ARGV.shift
+new_org = ARGV.shift
+team_ids = ARGV.shift.split(",").map{|id| id.to_i}
+
+access_token = ENV['GITHUB_ACCESS_TOKEN']
+
+client = Octokit::Client.new(:access_token => access_token)
+
+repo = client.repository(repo_name)
+option = {:team_ids => team_ids, :accept => 'application/vnd.github.nightshade-preview+json'} 
+client.transfer_repository(repo.full_name, new_org, option)
+
