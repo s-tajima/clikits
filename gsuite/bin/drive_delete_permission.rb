@@ -30,4 +30,9 @@ drive.authorization = credentials
 file_id = ARGV.shift
 permission_id = ARGV.shift
 
-pp res = drive.delete_permission(file_id, permission_id)
+begin
+  drive.delete_permission(file_id, permission_id)
+  puts "#{permission_id} for #{file_id} has been deleted."
+rescue Google::Apis::ClientError => e
+  puts "#{permission_id} for #{file_id} has NOT been deleted. (#{e.message})"
+end

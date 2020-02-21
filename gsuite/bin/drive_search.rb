@@ -31,10 +31,11 @@ email = ARGV.shift
 
 query = "'#{email}' in owners or '#{email}' in writers or '#{email}' in readers"
 fields = 'files(id, name, permissions(id, type, role, emailAddress, domain))'
-page_token = ''
+page_token = nil
 
 loop do
-  res = drive.list_files(q: query, fields: fields, page_token: page_token)
+  res = drive.list_files(q: query, fields: fields, page_size: 1000, page_token: page_token)
+
   res.files.each do |file|
     unless file.permissions.nil?
       perm = file.permissions.select{|p| p.email_address == email }.first

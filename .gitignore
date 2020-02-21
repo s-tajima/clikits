@@ -3,3 +3,4 @@
 **/.bundle
 **/client_secret.json
 **/credentials.yaml
+**/credentials.json
