@@ -1,3 +1,5 @@
 **/.env
 **/vendor/bundle
 **/.bundle
+**/client_secret.json
+**/credentials.yaml
