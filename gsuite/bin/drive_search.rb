@@ -47,6 +47,6 @@ loop do
   page_token = res.next_page_token
 
   if page_token.nil?
-    break 
+    break
   end
 end
