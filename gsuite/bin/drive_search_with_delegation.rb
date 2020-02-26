@@ -23,7 +23,7 @@ drive = Drive::DriveService.new
 drive.authorization = authorizer
 
 query = "'#{email}' in owners or '#{email}' in writers or '#{email}' in readers"
-fields = 'files(id, name, permissions(id, type, role, emailAddress, domain))'
+fields = 'files(id, name, permissions(id, type, role, emailAddress, domain)), nextPageToken'
 page_token = ''
 
 loop do

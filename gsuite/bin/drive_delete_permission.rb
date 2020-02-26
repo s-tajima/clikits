@@ -5,6 +5,9 @@ require 'google/apis/drive_v3'
 
 OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
 
+file_id = ARGV.shift
+permission_id = ARGV.shift
+
 scope = 'https://www.googleapis.com/auth/drive'
 
 client_id = Google::Auth::ClientId.from_file('client_secret.json')
@@ -26,9 +29,6 @@ end
 Drive = Google::Apis::DriveV3
 drive = Drive::DriveService.new
 drive.authorization = credentials
-
-file_id = ARGV.shift
-permission_id = ARGV.shift
 
 begin
   drive.delete_permission(file_id, permission_id)
