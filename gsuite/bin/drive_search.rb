@@ -7,6 +7,8 @@ OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
 
 scope = 'https://www.googleapis.com/auth/drive'
 
+email = ARGV.shift
+
 client_id = Google::Auth::ClientId.from_file('client_secret.json')
 
 token_store_file = 'credentials.yaml'
@@ -27,10 +29,9 @@ Drive = Google::Apis::DriveV3
 drive = Drive::DriveService.new
 drive.authorization = credentials
 
-email = ARGV.shift
 
 query = "'#{email}' in owners or '#{email}' in writers or '#{email}' in readers"
-fields = 'files(id, name, permissions(id, type, role, emailAddress, domain))'
+fields = 'files(id, name, permissions(id, type, role, emailAddress, domain)), nextPageToken'
 page_token = nil
 
 loop do
