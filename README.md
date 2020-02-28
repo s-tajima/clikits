@@ -6,6 +6,6 @@ ClI tools for some Cloud/SaaS Services.
 
 * [AWS](./awskits)
 * [GitHub](./githubkits)
-* [G Suite](./gsuite)
-* [Web](./gsuite)
+* [G Suite](./gsuitekits)
+* [Web](./webkits)
 
