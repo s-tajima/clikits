@@ -28,6 +28,7 @@ def emails_to_users(emails, users)
     user = users.detect{|u| u.profile.email == email}
 
     if user.nil?
+      puts "user #{email} is not exists."
       next
     end
     

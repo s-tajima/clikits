@@ -30,12 +30,15 @@ dest_channel_users = emails_to_users(emails, dest_users)
 
 dest_channel = dest_client.conversations_create(name: channel_name)
 
+dest_client.conversations_setTopic({channel: dest_channel.channel.id, topic: source_channel.topic.value})
+dest_client.conversations_setPurpose({channel: dest_channel.channel.id, purpose: source_channel.purpose.value})
+
 dest_channel_users.each do |du|
   begin
     dest_client.conversations_invite({channel: dest_channel.channel.id, users: du.id})
-    puts "Invite #{du.profile.display_name} succeeded." 
+    puts "Invite #{du.profile.email} succeeded."
   rescue => e
-    puts "Invite #{du.profile.display_name} failed. (#{e.message})" 
+    puts "Invite #{du.profile.email} failed. (#{e.message})"
     next
   end
 end
