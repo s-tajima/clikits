@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+require 'pp'
+require 'slack-ruby-client'
+
+require_relative '../lib/slack'
+
+config = YAML.load_file(ARGV.shift)
+channel_name = ARGV.shift
+
+source_client = gen_client(config["source_workspace"]["api_token"])
+source_test_result = source_client.auth_test
+puts "Source Client ... #{source_test_result.ok}"
+
+source_channel = source_client.channels_list.channels.detect {|c| c.name == channel_name}
+
+puts `sh /tmp/rename_and_archive.sh #{source_channel.id} _migrated_#{channel_name}`

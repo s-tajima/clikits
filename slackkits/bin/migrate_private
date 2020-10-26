@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+require 'pp'
+require 'slack-ruby-client'
+require 'colorize'
+
+require_relative '../lib/slack'
+
+config = YAML.load_file(ARGV.shift)
+channel_name = ARGV.shift
+
+source_client = gen_client(config["source_workspace"]["api_token"])
+source_test_result = source_client.auth_test
+puts "Source Client ... #{source_test_result.ok}"
+
+dest_client = gen_client(config["dest_workspace"]["api_token"])
+dest_test_result = dest_client.auth_test
+puts "Dest Client ... #{dest_test_result.ok}"
+
+puts "Start migration #{channel_name} from #{source_test_result.team} to #{dest_test_result.team}"
+
+source_channel = source_client.conversations_list({types: "private_channel"}).channels.detect {|c| c.name == channel_name}
+source_channel_ids = source_client.conversations_members(channel: source_channel[:id])[:members]
+
+source_users = source_client.users_list.members
+dest_users = dest_client.users_list.members
+
+emails = ids_to_emails(source_channel_ids, source_users)
+dest_channel_users = emails_to_users(emails, dest_users)
+
+dest_channel = dest_client.conversations_create({name: channel_name, is_private: true})
+
+dest_client.conversations_setTopic({channel: dest_channel.channel.id, topic: source_channel.topic.value})
+dest_client.conversations_setPurpose({channel: dest_channel.channel.id, purpose: source_channel.purpose.value})
+
+dest_channel_users.each do |du|
+  if du.id == "USLACKBOT"
+    puts "Invite #{du.id} skipped."
+    next
+  end
+
+  begin
+    dest_client.conversations_invite({channel: dest_channel.channel.id, users: du.id})
+    puts "Invite #{du.profile.email} succeeded.".colorize(:green)
+  rescue => e
+    puts "Invite #{du.profile.email} failed. (#{e.message})".colorize(:red)
+    next
+  end
+end
+
+url = "#{dest_test_result.url}archives/#{dest_channel.channel.id}"
+message = "This channel has been moved to: #{url}"
+
+source_client.chat_postMessage(channel: channel_name, text: message)
+
+puts message
+
