@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require 'octokit'
+require 'pp'
+
+Octokit.configure do |c|
+  c.auto_paginate = true
+end
+
+access_token = ENV['GITHUB_ACCESS_TOKEN']
+org_name = ARGV.shift
+
+client = Octokit::Client.new(:access_token => access_token)
+
+members = client.organization_members(org_name)
+members.each do |member|
+  puts "#{member.login}"
+end
