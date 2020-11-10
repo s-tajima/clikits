@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+require 'pp'
+require 'slack-ruby-client'
+
+require_relative '../lib/slack'
+
+config = YAML.load_file(ARGV.shift)
+channel_name = ARGV.shift
+
+client = gen_client(config["workspace"]["api_token"])
+test_result = client.auth_test
+
+members = client.users_list.members
+usergroups = client.usergroups_list({include_users: true}).usergroups
+
+usergroups.each do |ug|
+  ug.users.each do |ugu|
+    u = members.find {|m| m.id == ugu}
+    puts "#{ug.id}\t#{ug.name}\t#{ugu}\t#{u.profile.display_name}\t#{u.profile.email}"
+  end
+end
+
