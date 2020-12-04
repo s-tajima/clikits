@@ -32,6 +32,9 @@ groups = service.list_groups(customer: 'my_customer').groups
 
 groups.each do |group|
   members = service.list_members(group.email).members
+
+  next if members.nil?
+
   members.each do |member|
     puts "#{group.id}\t#{group.name}\t#{group.email}\t#{member.email}\t#{member.type}"
   end
