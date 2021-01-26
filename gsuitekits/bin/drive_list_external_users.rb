@@ -21,7 +21,7 @@ if credentials.nil?
   url = authorizer.get_authorization_url(base_url: OOB_URI)
   puts "Open #{url} in your browser and enter the resulting code."
   print "Code: "
-  code = gets
+  code = $stdin.gets
   credentials = authorizer.get_and_store_credentials_from_code(user_id: 'default', code: code, base_url: OOB_URI)
 end
 

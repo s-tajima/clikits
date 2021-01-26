@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+require 'octokit'
+require 'pp'
+
+access_token = ENV['GITHUB_ACCESS_TOKEN']
+org_name = ARGV.shift
+query = ARGV.shift
+
+Octokit.configure do |c|
+  c.auto_paginate = true
+end
+
+client = Octokit::Client.new(:access_token => access_token)
+
+results = client.search_code(query)
+
+results[:items].each do |item|
+  puts "#{item[:repository][:full_name]}\t#{item[:path]}\t#{item[:html_url]}"
+end
