@@ -33,6 +33,7 @@ fields = 'files(id, name, permissions(id, type, role, emailAddress, domain)), ne
 page_token = nil
 
 loop do
+  warn "token: #{page_token}"
   res = drive.list_files(fields: fields, page_size: 1000, page_token: page_token)
 
   res.files.each do |file|
