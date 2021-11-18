@@ -5,3 +5,6 @@
 **/*client_secret*.json
 **/credentials.yaml
 **/credentials.json
+
+azurekits/cmd/*/*
+!azurekits/cmd/*/*.go
