@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+
+require 'octokit'
+require 'pp'
+
+Octokit.configure do |c|
+  c.auto_paginate = true
+end
+
+access_token = ENV['GITHUB_ACCESS_TOKEN']
+org_name = ARGV.shift
+
+client = Octokit::Client.new(:access_token => access_token)
+
+client.organization_repositories(org_name).each do |repo|
+  begin
+    protection = client.branch_protection(repo.full_name, repo.default_branch, :accept => 'application/vnd.github.luke-cage-preview+json')
+
+    if protection.nil? 
+      dismiss_stale_reviews = "Null"
+      require_code_owner_reviews = "Null"
+      required_approving_review_count = "Null"
+      required_status_checks_strict = "Null"
+      enforce_admins_enabled = "Null"
+    else
+      dismiss_stale_reviews = protection.to_hash.dig(:required_pull_request_reviews, :dismiss_stale_reviews)
+      require_code_owner_reviews = protection.to_hash.dig(:required_pull_request_reviews, :require_code_owner_reviews)
+      required_approving_review_count = protection.to_hash.dig(:required_pull_request_reviews, :required_approving_review_count)
+      required_status_checks_strict = protection.to_hash.dig(:required_status_checks, :strict)
+      enforce_admins_enabled = protection.to_hash.dig(:enforce_admins, :enabled)
+    end 
+  rescue => e
+    dismiss_stale_reviews = "Error"
+    require_code_owner_reviews = "Error"
+    required_approving_review_count = "Error"
+    required_status_checks_strict = "Error"
+    enforce_admins_enabled = "Error"
+    notes = e.message
+  end
+
+  begin
+    vulnerability_alerts_enabled = client.vulnerability_alerts_enabled?(repo.full_name, :accept => 'application/vnd.github.london-preview+json')
+  rescue => e
+    vulnerability_alerts_enabled = "Error"
+    notes = e.message
+  end
+
+  print "#{repo.full_name}\t"
+  print "#{repo.topics.join(",")}\t"
+  print "#{repo.archived}\t"
+  print "#{repo.updated_at}\t"
+  print "#{repo.pushed_at}\t"
+  print "#{dismiss_stale_reviews}\t"
+  print "#{require_code_owner_reviews}\t"
+  print "#{required_approving_review_count}\t"
+  print "#{required_status_checks_strict}\t"
+  print "#{enforce_admins_enabled}\t"
+  print "#{vulnerability_alerts_enabled}\t"
+  puts "#{notes}\n"
+end
