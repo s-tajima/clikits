@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+wafv2 = factory.client("WAFV2")
+wafv2_us_east_1 = factory.client("WAFV2", "us-east-1")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+res_caller = sts.get_caller_identity()
+
+res_ipsets = wafv2_us_east_1.list_ip_sets({scope: "CLOUDFRONT"})
+
+res_ipsets.ip_sets.each do |ip_set|
+  res_ipset = wafv2_us_east_1.get_ip_set({scope: "CLOUDFRONT", id: ip_set.id, name: ip_set.name})
+
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\tCLOUDFRONT\t#{ip_set.name}\t#{res_ipset.ip_set.addresses.join(", ")}"
+end
+
+res_ipsets = wafv2.list_ip_sets({scope: "REGIONAL"})
+
+res_ipsets.ip_sets.each do |ip_set|
+  res_ipset = wafv2.get_ip_set({scope: "REGIONAL", id: ip_set.id, name: ip_set.name})
+
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\tREGIONAL\t#{ip_set.name}\t#{res_ipset.ip_set.addresses.join(", ")}"
+end

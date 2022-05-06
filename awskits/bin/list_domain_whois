@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+r53d = factory.client("Route53Domains", "us-east-1")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+res_caller = sts.get_caller_identity()
+
+res_domains = r53d.list_domains()
+res_domains.domains.each do |domain|
+  res_domain_detail = r53d.get_domain_detail({domain_name: domain.domain_name})
+
+  print "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{domain.domain_name}\t"
+  print "#{res_domain_detail.admin_contact.first_name}\t"
+  print "#{res_domain_detail.admin_contact.last_name}\t"
+  print "#{res_domain_detail.admin_contact.contact_type}\t"
+  print "#{res_domain_detail.admin_contact.organization_name}\t"
+  print "#{res_domain_detail.admin_contact.address_line_1}\t"
+  print "#{res_domain_detail.admin_contact.address_line_2}\t"
+  print "#{res_domain_detail.admin_contact.city}\t"
+  print "#{res_domain_detail.admin_contact.state}\t"
+  print "#{res_domain_detail.admin_contact.country_code}\t"
+  print "#{res_domain_detail.admin_contact.zip_code}\t"
+  print "#{res_domain_detail.admin_contact.phone_number}\t"
+  print "#{res_domain_detail.admin_contact.email}\t"
+  print "#{res_domain_detail.admin_contact.fax}\t"
+  print "#{res_domain_detail.admin_contact.extra_params}\t"
+  print "#{res_domain_detail.registrant_contact.first_name}\t"
+  print "#{res_domain_detail.registrant_contact.last_name}\t"
+  print "#{res_domain_detail.registrant_contact.contact_type}\t"
+  print "#{res_domain_detail.registrant_contact.organization_name}\t"
+  print "#{res_domain_detail.registrant_contact.address_line_1}\t"
+  print "#{res_domain_detail.registrant_contact.address_line_2}\t"
+  print "#{res_domain_detail.registrant_contact.city}\t"
+  print "#{res_domain_detail.registrant_contact.state}\t"
+  print "#{res_domain_detail.registrant_contact.country_code}\t"
+  print "#{res_domain_detail.registrant_contact.zip_code}\t"
+  print "#{res_domain_detail.registrant_contact.phone_number}\t"
+  print "#{res_domain_detail.registrant_contact.email}\t"
+  print "#{res_domain_detail.registrant_contact.fax}\t"
+  print "#{res_domain_detail.registrant_contact.extra_params}\t"
+  print "#{res_domain_detail.tech_contact.first_name}\t"
+  print "#{res_domain_detail.tech_contact.last_name}\t"
+  print "#{res_domain_detail.tech_contact.contact_type}\t"
+  print "#{res_domain_detail.tech_contact.organization_name}\t"
+  print "#{res_domain_detail.tech_contact.address_line_1}\t"
+  print "#{res_domain_detail.tech_contact.address_line_2}\t"
+  print "#{res_domain_detail.tech_contact.city}\t"
+  print "#{res_domain_detail.tech_contact.state}\t"
+  print "#{res_domain_detail.tech_contact.country_code}\t"
+  print "#{res_domain_detail.tech_contact.zip_code}\t"
+  print "#{res_domain_detail.tech_contact.phone_number}\t"
+  print "#{res_domain_detail.tech_contact.email}\t"
+  print "#{res_domain_detail.tech_contact.fax}\t"
+  print "#{res_domain_detail.tech_contact.extra_params}\t"
+  print "#{res_domain_detail.admin_privacy}\t"
+  print "#{res_domain_detail.registrant_privacy}\t"
+  puts  "#{res_domain_detail.tech_privacy}\t"
+end

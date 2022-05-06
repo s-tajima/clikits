@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+waf = factory.client("WAF")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+res_caller = sts.get_caller_identity()
+
+res_ipsets = waf.list_ip_sets
+res_ipsets.ip_sets.each do |ip_set|
+  res_ipset = waf.get_ip_set({ip_set_id: ip_set.ip_set_id})
+
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{ip_set.name}\t#{res_ipset.ip_set.ip_set_descriptors.map{|d|d.value}.join(", ")}"
+end

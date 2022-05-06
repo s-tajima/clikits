@@ -3,12 +3,18 @@
 $: << File.expand_path('../../lib', __FILE__)
 require 'awskits'
 
-profile    = ARGV.shift
-token_code = ARGV.shift
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
 
-factory = AWSKits::Factory.new(profile, token_code)
+factory = AWSKits::Factory.new(credential_file, role_arn)
 
 alb = factory.client("ElasticLoadBalancingV2")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+
+res_caller = sts.get_caller_identity()
 
 res_lb = alb.describe_load_balancers
 
@@ -19,6 +25,6 @@ res_lb.load_balancers.each do |lb|
   log_bucket  = res_attr.attributes.find{|v| v.key == "access_logs.s3.bucket" }.value
   log_prefix  = res_attr.attributes.find{|v| v.key == "access_logs.s3.prefix" }.value
 
-  puts "#{lb.load_balancer_name}\t#{lb.type}\t#{log_enabled}\t#{log_bucket}\t#{log_prefix}"
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{lb.load_balancer_name}\t#{lb.type}\t#{log_enabled}\t#{log_bucket}\t#{log_prefix}"
 end
 

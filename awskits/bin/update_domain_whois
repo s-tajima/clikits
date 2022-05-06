@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+require 'yaml'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+domain_name     = ARGV.shift
+contact_file    = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+r53d = factory.client("Route53Domains", "us-east-1")
+
+contact = YAML.load_file(contact_file)
+contact[:domain_name] = domain_name
+
+res = r53d.update_domain_contact(contact)
+pp res

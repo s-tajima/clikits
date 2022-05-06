@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+alb = factory.client("ElasticLoadBalancingV2")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+
+res_caller = sts.get_caller_identity()
+
+res_lb = alb.describe_load_balancers
+
+res_lb.load_balancers.each do |lb|
+  res_listeners = alb.describe_listeners({load_balancer_arn: lb.load_balancer_arn})
+  res_listeners.listeners.each do |listener|
+    res_rules = alb.describe_rules({listener_arn: listener.listener_arn})
+    res_rules.rules.each do |rule|
+      rule.conditions.each do |condition|
+        next unless condition.field == "source-ip"
+        puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{lb.load_balancer_name}\t#{condition.field}\t#{condition.source_ip_config.values.join(",")}"
+      end
+    end
+  end
+end
+
