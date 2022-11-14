@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+cf = factory.client("CloudFront")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+
+res_caller = sts.get_caller_identity()
+
+res_distributions = cf.list_distributions
+res_cache_policies = cf.list_cache_policies
+
+cps = res_cache_policies.cache_policy_list.items
+
+res_distributions.distribution_list.items.each do |d|
+  res_distribution = cf.get_distribution({id: d.id})
+  
+  dd = res_distribution.distribution
+
+  dd_toid = dd.distribution_config.default_cache_behavior.target_origin_id
+  dd_cpid= dd.distribution_config.default_cache_behavior.cache_policy_id
+
+  dd_cpid= dd.distribution_config.default_cache_behavior.cache_policy_id
+
+  print "#{res_alias.account_aliases[0]}\t"
+  print "#{res_caller.account}\t"
+  print "#{dd.id}\t"
+  print "#{dd.domain_name}\t"
+  print "#{dd.distribution_config.aliases.items.join(',')}\t"
+  print "default cache behavior\t"
+  print "#{dd_toid}\t"
+  print "#{dd.distribution_config.origins.items.find{|o| o.id == dd_toid}.domain_name}\t"
+  print "#{dd_cpid}\t"
+  print "#{dd_cpid.nil? ? "" : cps.find{|c| c.cache_policy.id == dd_cpid }.cache_policy.cache_policy_config.name}\t"
+
+  unless dd.distribution_config.default_cache_behavior.forwarded_values.nil?
+    print "#{dd.distribution_config.default_cache_behavior.forwarded_values.query_string}\t"
+    print "#{dd.distribution_config.default_cache_behavior.forwarded_values.cookies.forward}\t"
+    print "#{dd.distribution_config.default_cache_behavior.forwarded_values.headers.items.join(',')}\t"
+  end
+  puts
+  
+  dd.distribution_config.cache_behaviors.items.each do |cb|
+    print "#{res_alias.account_aliases[0]}\t"
+    print "#{res_caller.account}\t"
+    print "#{dd.id}\t"
+    print "#{dd.domain_name}\t"
+    print "#{dd.distribution_config.aliases.items.join(',')}\t"
+    print "cache behavior\t"
+    print "#{cb.target_origin_id}\t"
+    print "#{dd.distribution_config.origins.items.find{|o| o.id == cb.target_origin_id}.domain_name}\t"
+    print "#{cb.cache_policy_id}\t"
+    print "#{cb.cache_policy_id.nil? ? "" : cps.find{|c| c.cache_policy.id == cb.cache_policy_id}.cache_policy.cache_policy_config.name}\t"
+
+    unless cb.forwarded_values.nil?
+      print "#{cb.forwarded_values.query_string}\t"
+      print "#{cb.forwarded_values.cookies.forward}\t"
+      print "#{cb.forwarded_values.headers.items.join(',')}\t"
+    end
+    puts
+  end
+end
+

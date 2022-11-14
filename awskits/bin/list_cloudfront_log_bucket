@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+cf = factory.client("CloudFront")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+
+res_caller = sts.get_caller_identity()
+
+res_distributions = cf.list_distributions
+
+res_distributions.distribution_list.items.each do |d|
+  res_distribution = cf.get_distribution({id: d.id})
+  
+  dd = res_distribution.distribution
+  dd_log = dd.distribution_config.logging
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{dd.id}\t#{dd.domain_name}\t#{dd.distribution_config.aliases.items.join(',')}\t#{dd.last_modified_time}\t#{dd_log.enabled}\t#{dd_log.include_cookies}\t#{dd_log.bucket}\t#{dd_log.prefix}"
+end
+

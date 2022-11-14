@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+rds = factory.client("RDS")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+
+res_caller = sts.get_caller_identity()
+
+res_dbs = rds.describe_db_instances
+
+res_dbs.db_instances.each do |instance|
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{instance.db_instance_identifier}\t#{instance.engine}\t#{instance.endpoint.address}\t#{instance.publicly_accessible}"
+end
+
