@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+res_caller = sts.get_caller_identity()
+
+res_providers = iam.list_open_id_connect_providers()
+res_providers.open_id_connect_provider_list.each do |providers|
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{providers.arn}\t"
+end
