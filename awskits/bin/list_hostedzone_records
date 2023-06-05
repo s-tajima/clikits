@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+r53 = factory.client("Route53", "us-east-1")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+res_caller = sts.get_caller_identity()
+
+res_hzs = r53.list_hosted_zones()
+res_hzs.hosted_zones.each do |hz|
+  res_records = r53.list_resource_record_sets({ hosted_zone_id: hz.id })
+
+  res_records.resource_record_sets.each do |rs|
+    unless rs.resource_records.nil?
+      target = rs.resource_records.map{|r| r.value }.join(", ")
+    end
+
+    unless rs.alias_target.nil?
+      target = rs.alias_target.dns_name
+    end
+
+    print res_alias.account_aliases[0] + "\t"
+    print res_caller.account + "\t"
+    print rs.name + "\t"
+    print rs.type + "\t"
+    print target
+    puts
+  end
+end
