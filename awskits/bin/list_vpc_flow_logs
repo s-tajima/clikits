@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+ec2 = factory.client("EC2")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+
+res_caller = sts.get_caller_identity()
+
+res_vpcs = ec2.describe_vpcs
+res_logs = ec2.describe_flow_logs
+
+res_vpcs.vpcs.each do |vpc|
+  traffic_type = "NONE"
+  log_destination_type = "NONE"
+  log_destination = "NONE"
+  log_format = "NONE"
+  max_aggregation_interval = "NONE"
+
+  log = res_logs.flow_logs.find{|log| log.resource_id == vpc.vpc_id}
+  unless log.nil?
+    traffic_type = log.traffic_type
+    log_destination_type = log.log_destination_type
+    log_destination = log.log_destination
+    log_format = log.log_format
+    max_aggregation_interval = log.max_aggregation_interval
+  end
+
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{vpc.vpc_id}\t#{vpc.cidr_block}\t#{vpc.is_default}\t#{traffic_type}\t#{log_destination_type}\t#{log_destination}\t#{log_format}\t#{max_aggregation_interval}"
+end
+

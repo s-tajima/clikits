@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+amplify = factory.client("Amplify")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+
+res_caller = sts.get_caller_identity()
+
+res_apps = amplify.list_apps
+
+res_apps.apps.each do |app|
+  app.custom_rules.each do |rule|
+    print app.app_id + "\t"
+    print app.name + "\t"
+    print rule.source + "\t"
+    print rule.target + "\t"
+    print rule.status + "\t"
+    puts
+  end
+end
+
