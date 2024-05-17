@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+
+credential_file = ARGV.shift
+role_arn        = ARGV.shift
+
+factory = AWSKits::Factory.new(credential_file, role_arn)
+
+rds = factory.client("RDS")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+logs = factory.client("CloudWatchLogs")
+
+res_alias = iam.list_account_aliases()
+
+res_caller = sts.get_caller_identity()
+
+res_clusters = rds.describe_db_clusters()
+
+res_clusters.db_clusters.each do |cluster|
+  log_group_name = "/aws/rds/cluster/#{cluster.db_cluster_identifier}/audit"
+
+  begin 
+    log_streams = logs.describe_log_streams(log_group_name: log_group_name, order_by: "LastEventTime", descending: true, limit: 1).log_streams
+  rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => ex
+    puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{cluster.db_cluster_identifier}\tnot exists\tnot exists\n"
+    next
+  end
+
+  puts "#{res_alias.account_aliases[0]}\t#{res_caller.account}\t#{cluster.db_cluster_identifier}\t#{log_streams[0].log_stream_name}\t#{Time.at(log_streams[0].last_event_timestamp / 1000)}\n"
+end
