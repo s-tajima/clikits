@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+
+$: << File.expand_path('../../lib', __FILE__)
+require 'awskits'
+require 'json'
+
+profile    = ARGV.shift
+token_code = ARGV.shift
+
+factory = AWSKits::Factory.new(profile, token_code)
+
+s3 = factory.client("S3")
+iam = factory.client("IAM")
+sts = factory.client("STS")
+
+res_alias = iam.list_account_aliases()
+res_caller = sts.get_caller_identity()
+
+buckets = s3.list_buckets.buckets
+
+
+buckets.each do |bucket|
+  begin
+    res = s3.get_bucket_policy({ bucket: bucket.name })
+    bucket_policy = res.policy.read
+  rescue Aws::S3::Errors::NoSuchBucketPolicy => ex
+    bucket_policy = '"DISABLE"'
+  rescue Aws::S3::Errors::PermanentRedirect => ex
+    bucket_policy = '"FAILED"'
+  end
+
+  puts "= #{res_alias.account_aliases[0]}:#{res_caller.account}:#{bucket.name} ======="
+  puts JSON.pretty_generate(JSON.parse(bucket_policy))
+  puts
+end
